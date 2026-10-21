@@ -43,9 +43,23 @@ if hasattr(sys.stdout, "reconfigure"):
 
 HOME = Path.home()
 HOME_STR = str(HOME)
-REDACTIONS = [
-    (HOME_STR, "%HOME%"),
-]
+
+
+def _home_variants() -> list:
+    """Every spelling of the home directory that can show up in a path (resolved, Windows 8.3)."""
+    variants = {HOME_STR, os.path.realpath(HOME_STR)}
+    if os.name == "nt":
+        try:
+            import ctypes
+            buf = ctypes.create_unicode_buffer(32768)
+            if ctypes.windll.kernel32.GetShortPathNameW(HOME_STR, buf, len(buf)):
+                variants.add(buf.value)
+        except Exception:
+            pass
+    return sorted(variants, key=len, reverse=True)
+
+
+REDACTIONS = [(v, "%HOME%") for v in _home_variants()]
 
 
 def redact(text: str) -> str:

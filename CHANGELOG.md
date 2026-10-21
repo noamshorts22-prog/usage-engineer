@@ -7,6 +7,8 @@
   their existing `state/` folder so recorded applies can still be rolled back.
 - Benchmark run records go to the state directory instead of the package folder.
 - CI on Linux, macOS and Windows.
+- Fix: `%HOME%` redaction now also covers the resolved and Windows 8.3 short spellings of the
+  home path (for example `C:\Users\RUNNER~1`), which previously leaked into reports.
 
 ## 0.1.0 - 2026-09-20
 

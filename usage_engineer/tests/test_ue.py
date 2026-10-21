@@ -123,7 +123,13 @@ class TestSummarizeLog(TempDirMixin):
         body += [f"tail {i}" for i in range(30)]
         text = "\n".join(body)
         log.write_text(text, encoding="utf-8")
-        code, out = run_cli(["summarize-log", "--file", str(log), "--out", str(self.work / "s")])
+        # Treat the case dir as "home": temp is not under home on Linux/macOS runners.
+        saved = ue.REDACTIONS
+        ue.REDACTIONS = [(str(self.work), "%HOME%")]
+        try:
+            code, out = run_cli(["summarize-log", "--file", str(log), "--out", str(self.work / "s")])
+        finally:
+            ue.REDACTIONS = saved
         self.assertEqual(code, 0)
         summary = (self.work / "s" / "summary.md").read_text(encoding="utf-8")
         full = self.work / "s" / "full.log"
@@ -135,6 +141,11 @@ class TestSummarizeLog(TempDirMixin):
         self.assertIn("%HOME%", summary)
         self.assertIn("full.log", summary)
         self.assertIn("omitted from THIS view", summary)
+
+    def test_redact_covers_home_spellings(self):
+        for variant, _ in ue.REDACTIONS:
+            self.assertEqual(ue.redact(variant + os.sep + "x.log"), "%HOME%" + os.sep + "x.log")
+        self.assertNotIn(ue.HOME_STR, ue.redact(ue.HOME_STR + os.sep + "a"))
 
     def test_malformed_binary_input(self):
         log = self.work / "blob.bin"
