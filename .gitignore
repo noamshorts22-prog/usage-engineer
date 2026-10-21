@@ -1,0 +1,13 @@
+state/
+benchmarks/runs/
+__pycache__/
+*.pyc
+.ue/
+# personal, not published
+baselines/
+CHECKPOINT.md
+START_HERE_HE.md
+*.tar
+dist/
+build/
+*.egg-info/

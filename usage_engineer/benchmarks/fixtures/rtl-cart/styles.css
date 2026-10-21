@@ -1,0 +1,16 @@
+body {
+  font-family: system-ui, sans-serif;
+}
+
+.cart {
+  margin-left: 24px;
+  padding: 16px;
+  text-align: left;
+  border: 1px solid #ccc;
+}
+
+.price {
+  direction: ltr;
+  unicode-bidi: isolate;
+  display: inline-block;
+}

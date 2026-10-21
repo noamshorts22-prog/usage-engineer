@@ -1,0 +1,14 @@
+name: Feature request
+description: Suggest a new waste signal, command or agent integration
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Which wasted work should ue catch or prevent?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behaviour

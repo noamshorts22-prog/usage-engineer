@@ -1,0 +1,19 @@
+# ue opt-in profile for Codex CLI (layer on top of $CODEX_HOME/config.toml)
+# Activate explicitly:   codex --profile usage-efficient
+#
+# What it does NOT change: model, model_reasoning_effort, context window, compaction,
+# service tier, sandbox, approvals, memories, plugins, MCP servers. Nothing here
+# overrides your base config except the extra developer instructions below.
+#
+# Rollback:  python <tool>\ue.py rollback --target codex
+# Apply:     python <tool>\ue.py apply-profile --target codex
+
+developer_instructions = """
+Usage-efficiency workflow (opt-in; requirements and verification are unchanged):
+- Start non-trivial tasks from a context pack when one exists (ue prepare-context); if the evidence
+  requires widening, widen it - the pack narrows the start, not correctness.
+- For long command/tool output: save the full output to a file and inspect focused slices
+  (ue summarize-log); never repeat a command whose full output you already stored.
+- If the same action fails twice with identical input, switch to a genuinely different approach.
+- Do not claim a check passed unless it actually ran; keep failure evidence reachable by path.
+"""

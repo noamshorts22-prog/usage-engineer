@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "variants": {
+    "A": {"name": "baseline", "args": [], "prep_context": false},
+    "B": {"name": "context-pack", "args": [], "prep_context": true}
+  },
+  "cases": [
+    {
+      "id": "bugfix-offbyone",
+      "title": "Fix off-by-one inclusive range bug",
+      "fixture": "fixtures/bugfix-offbyone",
+      "prompt": "Fix the bug in src/calc.py: sum_range(a, b) must return the sum of all integers from a to b inclusive. Do not modify the tests. Run the test suite and make sure it passes.",
+      "accept_cmd": "python \"{FIXTURE}/accept.py\"",
+      "accept_expect_exit": 0
+    },
+    {
+      "id": "crossfile-rename",
+      "title": "Rename a constant across a small package",
+      "fixture": "fixtures/crossfile-rename",
+      "prompt": "Rename the constant MAX_RETRIES to RETRY_LIMIT everywhere in the src package (config.py, client.py, worker.py, __init__.py) while keeping behavior identical. Do not modify the tests. Run the tests and make sure they pass.",
+      "accept_cmd": "python \"{FIXTURE}/accept.py\"",
+      "accept_expect_exit": 0
+    },
+    {
+      "id": "regression-test",
+      "title": "Add a regression test for a fixed empty-input bug",
+      "fixture": "fixtures/regression-test",
+      "prompt": "src/report.py already contains the fix for the empty-input crash (empty list returns 0.0). Do not change src/report.py. Add a new regression test under tests/ proving that average([]) returns 0.0. The new test must pass on the current source and would fail on the old buggy behavior. Run the tests.",
+      "accept_cmd": "python \"{FIXTURE}/accept.py\"",
+      "accept_expect_exit": 0
+    },
+    {
+      "id": "rtl-cart",
+      "title": "RTL correction for a Hebrew cart UI",
+      "fixture": "fixtures/rtl-cart",
+      "prompt": "The cart UI contains Hebrew text but renders LTR. Make the document RTL (lang=he, dir=rtl) and make .cart use direction: rtl, right text alignment and a direction-agnostic inline-start margin instead of left-only rules. Prices (.price) must stay LTR-safe with bidi isolation. Edit index.html and styles.css only.",
+      "accept_cmd": "python \"{FIXTURE}/accept.py\"",
+      "accept_expect_exit": 0
+    }
+  ]
+}
