@@ -379,6 +379,14 @@ class TestBench(TempDirMixin):
         self.assertEqual(ue._runner_error_message(jsonl), "model requires a newer version of Codex")
         self.assertIsNone(ue._runner_error_message("not json"))
 
+    def test_usage_parsed_from_turn_completed(self):
+        line = json.dumps({"type": "turn.completed", "usage": {
+            "input_tokens": 100, "cached_input_tokens": 40, "output_tokens": 7,
+            "reasoning_output_tokens": 3}})
+        u = ue._parse_model_usage(line + "\n" + line)
+        self.assertEqual((u["input"], u["cached"], u["output"], u["reasoning"], u["total"]),
+                         (200, 80, 14, 6, 214))
+
     def test_codex_command_uses_valid_exec_flags(self):
         self.assertNotIn(" -a ", ue._variant_cmd_preview({"prompt": "x"}, {}))
         self.assertIn("-s workspace-write", ue._variant_cmd_preview({"prompt": "x"}, {}))

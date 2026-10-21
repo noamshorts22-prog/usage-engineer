@@ -1489,6 +1489,14 @@ def _parse_model_usage(stdout: str):
             obj = json.loads(line)
         except Exception:
             continue
+        if obj.get("type") == "turn.completed" and isinstance(obj.get("usage"), dict):
+            # codex-cli >= 0.150: one usage block per turn; sum them across turns
+            turn_usage = obj["usage"]
+            best = dict(best or {})
+            for k, v in turn_usage.items():
+                if isinstance(v, int):
+                    best[k] = best.get(k, 0) + v
+            continue
         payload = obj.get("payload") or obj
         if payload.get("type") == "token_count":
             info = payload.get("info") or {}
@@ -1502,7 +1510,10 @@ def _parse_model_usage(stdout: str):
         "cached": best.get("cached_input_tokens"),
         "output": best.get("output_tokens"),
         "reasoning": best.get("reasoning_output_tokens"),
-        "total": best.get("total_tokens"),
+        "total": best.get("total_tokens") if best.get("total_tokens") is not None else (
+            best["input_tokens"] + best["output_tokens"]
+            if isinstance(best.get("input_tokens"), int) and isinstance(best.get("output_tokens"), int)
+            else None),
         "requests": None,
     }
 

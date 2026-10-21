@@ -46,7 +46,7 @@ ue map build --project .      # snapshot the project; `map check` tells you when
 | `bench list/plan` | the 4 frozen paired benchmark cases and the exact commands (no model calls) | stdout |
 | `bench run --runner codex --max-calls N --confirm` | opt-in live A/B run with a hard invocation cap and no automatic retries | state dir |
 | `doctor` | environment check: versions, config paths, profiles | stdout |
-| `selftest` | 29 deterministic tests, no model calls | - |
+| `selftest` | 30 deterministic tests, no model calls | - |
 
 ## Measure before you believe
 
