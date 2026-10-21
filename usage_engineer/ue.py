@@ -1329,6 +1329,7 @@ def cmd_bench(args) -> int:
                             "reasoning": args.reasoning or "config-default",
                             "note": "recorded for compare; same settings must be used for A and B"},
                    "cases": []}
+        runner_failures = 0
         for cid in selected:
             case = cases[cid]
             for v in vsel:
@@ -1355,6 +1356,9 @@ def cmd_bench(args) -> int:
                     usage, err = _run_model(args, case, variants[v], wd)
                     wall = round(time.time() - t0, 1)
                     model_note = err or "executed"
+                    if err and err.startswith("RUNNER FAILED"):
+                        runner_failures += 1
+                        print(f"[{tag}] {err}")
                 post = _run_accept(case, wd)
                 print(f"[{tag}] post-check accept_pass={post['pass']} | usage="
                       f"{json.dumps(usage) if usage else 'UNMEASURED'} | wall={wall}")
@@ -1376,6 +1380,10 @@ def cmd_bench(args) -> int:
                            {"variant": v, "cases": [rec], "meta": summary["meta"]})
         write_json(results_dir / f"{stamp()}-summary.json", summary)
         print(f"summary: {redact(str(results_dir))}")
+        if runner_failures:
+            print(f"ERROR: {runner_failures} run(s) failed before the agent did any work; "
+                  "these records are not measurements.", file=sys.stderr)
+            return 1
         print("Next: ue compare --a <recordA.json> --b <recordB.json>")
         return 0
     print("ERROR: unknown bench subcommand", file=sys.stderr)
@@ -1394,14 +1402,14 @@ def _copy_solution(sol: Path, wd: Path) -> None:
 
 def _variant_cmd_preview(case: dict, variant: dict) -> str:
     vargs = " ".join(variant.get("args", []))
-    return (f"codex exec --json --skip-git-repo-check -C <isolated copy> -a never {vargs} "
+    return (f"codex exec --json --skip-git-repo-check -C <isolated copy> -s workspace-write {vargs} "
             f"\"{case.get('prompt', '')[:60]}...\"")
 
 
 def _run_model(args, case: dict, variant: dict, wd: Path):
     if args.runner == "codex":
         exe = shutil.which("codex") or "codex"
-        cmd = [exe, "exec", "--json", "--skip-git-repo-check", "-C", str(wd), "-a", "never"]
+        cmd = [exe, "exec", "--json", "--skip-git-repo-check", "-C", str(wd), "-s", "workspace-write"]
         if args.model:
             cmd += ["-m", args.model]
         if args.reasoning:
@@ -1434,16 +1442,41 @@ def _run_model(args, case: dict, variant: dict, wd: Path):
         return None, "unknown runner"
     try:
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=args.timeout,
-                           encoding="utf-8", errors="replace", cwd=str(wd))
+                           encoding="utf-8", errors="replace", cwd=str(wd),
+                           stdin=subprocess.DEVNULL)
     except subprocess.TimeoutExpired:
         return None, f"timeout after {args.timeout}s (turn not finished; cannot count as success)"
     except FileNotFoundError:
         return None, "runner executable not found on PATH"
+    if r.returncode != 0:
+        detail = _runner_error_message(r.stdout or "") or (r.stderr or r.stdout or "").strip()[-600:]
+        return None, f"RUNNER FAILED (exit={r.returncode}): {detail}"
     usage = _parse_model_usage(r.stdout or "")
     if usage is None:
         return None, (f"usage fields not found in {args.runner} output; reported UNMEASURED "
                       f"(exit={r.returncode})")
     return usage, None
+
+
+def _runner_error_message(stdout: str):
+    """Last error message from `codex exec --json` JSONL (turn.failed / error events), else None."""
+    msg = None
+    for line in stdout.splitlines():
+        try:
+            obj = json.loads(line)
+        except Exception:
+            continue
+        if obj.get("type") == "turn.failed":
+            msg = (obj.get("error") or {}).get("message") or msg
+        elif obj.get("type") == "error":
+            msg = obj.get("message") or msg
+    if msg:
+        try:  # the API error is often a JSON document inside the message string
+            inner = json.loads(msg)
+            msg = (inner.get("error") or {}).get("message") or msg
+        except Exception:
+            pass
+    return msg[:600] if msg else None
 
 
 def _parse_model_usage(stdout: str):

@@ -356,6 +356,33 @@ class TestBench(TempDirMixin):
         self.assertEqual(code, 2)
         self.assertIn("--max-calls is required", out)
 
+    def test_runner_failure_is_reported_not_measured(self):
+        saved = ue._run_model
+        ue._run_model = lambda *a, **k: (None, "RUNNER FAILED (exit=2): unexpected argument")
+        try:
+            code, out = run_cli(["bench", "run", "--case", "bugfix-offbyone", "--variant", "A",
+                                 "--runner", "codex", "--max-calls", "1", "--confirm",
+                                 "--out", str(self.work / "runs")])
+        finally:
+            ue._run_model = saved
+        self.assertEqual(code, 1, out[-1500:])
+        self.assertIn("RUNNER FAILED", out)
+        self.assertIn("not measurements", out)
+
+    def test_runner_error_message_extracted_from_jsonl(self):
+        jsonl = "\n".join([
+            json.dumps({"type": "turn.started"}),
+            json.dumps({"type": "turn.failed", "error": {"message": json.dumps(
+                {"type": "error", "status": 400,
+                 "error": {"message": "model requires a newer version of Codex"}})}}),
+        ])
+        self.assertEqual(ue._runner_error_message(jsonl), "model requires a newer version of Codex")
+        self.assertIsNone(ue._runner_error_message("not json"))
+
+    def test_codex_command_uses_valid_exec_flags(self):
+        self.assertNotIn(" -a ", ue._variant_cmd_preview({"prompt": "x"}, {}))
+        self.assertIn("-s workspace-write", ue._variant_cmd_preview({"prompt": "x"}, {}))
+
     def test_fake_runner_end_to_end_all_cases(self):
         outdir = self.work / "runs"
         code, out = run_cli(["bench", "run-all", "--runner", "fake", "--max-calls", "8",

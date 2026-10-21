@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Fix: `bench --runner codex` passed `-a never`, which `codex exec` rejects, so every live run died
+  instantly. It now uses `-s workspace-write` and closes stdin.
+- Runner failures are reported as `RUNNER FAILED` with the real model/API error, and `bench`
+  exits 1 instead of saving them as if they were measurements.
+
 ## 0.2.0 - 2026-10-21
 
 - Installable with `pip install` / `pipx install`; adds the `ue` command and `python -m usage_engineer`.
