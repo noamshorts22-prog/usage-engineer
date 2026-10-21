@@ -61,6 +61,24 @@ ue bench run-all --runner codex --max-calls 8 --confirm
 ue compare --a <baseline-run.json> --b <profile-run.json>
 ```
 
+### First live result (2026-10-21, n=1 per cell, codex-cli 0.163.0, default model)
+
+A = baseline, B = `context-pack` (a prepared project map handed to the agent up front).
+
+| Case | A total tokens | B total tokens | A pass | B pass |
+|---|---:|---:|:-:|:-:|
+| bugfix-offbyone | 325,468 | 364,474 | yes | yes |
+| crossfile-rename | 286,107 | 281,159 | yes | yes |
+| regression-test | 294,160 | 266,461 | yes | no* |
+| rtl-cart | 296,432 | 535,727 | yes | yes |
+
+On the three cases both variants passed, B used **30% more** tokens (+273,353), mostly cached
+input. So on these small fixtures the context pack does not pay for itself, and `ue` does not claim
+it does. One sample per cell is noise-level; treat this as a demonstration of the method, not a verdict.
+
+\* B's failure was environmental: the file the agent wrote under the Codex Windows sandbox was
+not readable by the acceptance script (`PermissionError`), so it says nothing about B's quality.
+
 ## Safety properties
 
 - Audit output never includes transcript text and redacts your home directory as `%HOME%`.
@@ -75,7 +93,10 @@ State lives in `~/.usage-engineer` (override with `UE_STATE_DIR`).
 
 ## Known limitations
 
-- Model-level efficiency is unmeasured until you run `bench` yourself, because live runs cost quota.
+- Model-level efficiency is barely measured: one live run per cell so far (see above). Live runs
+  cost quota, so results from your machine are very welcome.
+- On Windows, files the agent creates inside the Codex sandbox can be unreadable to the
+  acceptance script, which then reports a false failure.
 - Token figures derived from character counts are estimates (4 characters per token).
 - The OpenCode audit covers `session` table totals, not per-message parsing.
 
