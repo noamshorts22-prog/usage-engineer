@@ -22,6 +22,16 @@ python ue.py selftest
 
 Add a test in `usage_engineer/tests/test_ue.py` for every behaviour change.
 
+The skill bundles a copy of the CLI. After editing `usage_engineer/ue.py`, refresh it, or the
+selftest fails:
+
+```
+cp usage_engineer/ue.py skills/usage-engineer/scripts/ue.py
+```
+
+A release bumps `VERSION` in `ue.py`, `metadata.version` in `SKILL.md`, and `version` in both
+`.codex-plugin/plugin.json` and `.claude-plugin/plugin.json`; the selftest checks they match.
+
 ## Good first contributions
 
 - Support for another agent CLI (Claude Code, Gemini CLI, Aider) in `audit` and `bench`.

@@ -1,0 +1,14 @@
+{
+  "name": "usage-engineer",
+  "displayName": "Usage Engineer",
+  "version": "0.3.0",
+  "description": "Cut wasted tokens in agent sessions: compact long logs, stop repeated failures, detect stale project maps, and audit local Codex and OpenCode usage. Local only, no network.",
+  "author": {
+    "name": "noamshorts22-prog",
+    "url": "https://github.com/noamshorts22-prog"
+  },
+  "homepage": "https://github.com/noamshorts22-prog/usage-engineer",
+  "repository": "https://github.com/noamshorts22-prog/usage-engineer",
+  "license": "MIT",
+  "keywords": ["tokens", "usage", "logs", "context", "codex", "opencode", "efficiency"]
+}

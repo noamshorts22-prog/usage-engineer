@@ -22,6 +22,20 @@ ue doctor
 
 Or run from a checkout with `python ue.py <command>` (Windows: `ue.cmd <command>`).
 
+### As an agent skill
+
+`ue` also ships as an [Agent Skill](https://agentskills.io) that tells the agent when to use it:
+long logs go to a file and get compacted, identical failures are not retried, and maps are checked
+before work resumes. The skill bundles `ue.py`, so nothing else needs installing.
+
+| Agent | Install |
+|---|---|
+| Codex CLI | `codex plugin marketplace add noamshorts22-prog/usage-engineer` then `codex plugin add usage-engineer@usage-engineer` |
+| Claude Code | `claude plugin marketplace add noamshorts22-prog/usage-engineer` then `claude plugin install usage-engineer@usage-engineer` |
+| Any agent (Cursor, Gemini CLI, OpenCode, ...) | `npx skills add noamshorts22-prog/usage-engineer` |
+
+The skill itself is [skills/usage-engineer/SKILL.md](skills/usage-engineer/SKILL.md).
+
 ## Two minutes to your first numbers
 
 ```
@@ -46,7 +60,7 @@ ue map build --project .      # snapshot the project; `map check` tells you when
 | `bench list/plan` | the 4 frozen paired benchmark cases and the exact commands (no model calls) | stdout |
 | `bench run --runner codex --max-calls N --confirm` | opt-in live A/B run with a hard invocation cap and no automatic retries | state dir |
 | `doctor` | environment check: versions, config paths, profiles | stdout |
-| `selftest` | 30 deterministic tests, no model calls | - |
+| `selftest` | 34 deterministic tests, no model calls | - |
 
 ## Measure before you believe
 

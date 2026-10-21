@@ -1,0 +1,15 @@
+{
+  "name": "usage-engineer",
+  "description": "Usage Engineer: cut wasted tokens in coding-agent sessions",
+  "owner": {
+    "name": "noamshorts22-prog",
+    "url": "https://github.com/noamshorts22-prog"
+  },
+  "plugins": [
+    {
+      "name": "usage-engineer",
+      "source": "./",
+      "description": "Compact long logs, stop repeated failures, detect stale maps, audit local usage"
+    }
+  ]
+}

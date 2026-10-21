@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 - 2026-10-21
+
+- New: `ue` as an Agent Skill (`skills/usage-engineer/SKILL.md`) with the CLI bundled, so the agent
+  compacts long logs, stops retrying identical failures and checks maps on its own.
+- Installable as a Codex plugin (`codex plugin marketplace add noamshorts22-prog/usage-engineer`),
+  a Claude Code plugin, or with `npx skills add noamshorts22-prog/usage-engineer` for other agents.
+- Tests keep the bundled script identical to the CLI and check the skill and plugin manifests
+  against the Agent Skills and Codex listing limits.
+
 ## 0.2.1 - 2026-10-21
 
 - Fix: `bench --runner codex` passed `-a never`, which `codex exec` rejects, so every live run died

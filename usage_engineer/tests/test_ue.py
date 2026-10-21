@@ -420,5 +420,64 @@ class TestRedaction(unittest.TestCase):
         self.assertIn("%HOME%", ue.redact(s))
 
 
+REPO = TOOL_DIR.parent
+SKILL_DIR = REPO / "skills" / "usage-engineer"
+
+
+def read_frontmatter(path: Path) -> dict:
+    text = path.read_text(encoding="utf-8")
+    assert text.startswith("---\n"), "SKILL.md must start with YAML frontmatter"
+    block = text.split("---\n", 2)[1]
+    fm, key = {}, None
+    for line in block.splitlines():
+        if line.startswith("  ") and key:
+            k, _, v = line.strip().partition(":")
+            fm.setdefault(key, {})[k.strip()] = v.strip().strip('"')
+        elif ":" in line:
+            key, _, v = line.partition(":")
+            key = key.strip()
+            if v.strip():
+                fm[key] = v.strip()
+    return fm
+
+
+@unittest.skipUnless(SKILL_DIR.is_dir(), "skill folder ships only in the source checkout")
+class TestSkillPackaging(unittest.TestCase):
+    def test_bundled_script_matches_cli(self):
+        bundled = (SKILL_DIR / "scripts" / "ue.py").read_text(encoding="utf-8")
+        source = (TOOL_DIR / "ue.py").read_text(encoding="utf-8")
+        self.assertEqual(bundled, source, "run: cp usage_engineer/ue.py skills/usage-engineer/scripts/ue.py")
+
+    def test_frontmatter_follows_agent_skills_spec(self):
+        fm = read_frontmatter(SKILL_DIR / "SKILL.md")
+        self.assertEqual(fm["name"], SKILL_DIR.name)
+        self.assertRegex(fm["name"], r"^[a-z0-9]+(-[a-z0-9]+)*$")
+        self.assertLessEqual(len(fm["name"]), 64)
+        self.assertTrue(0 < len(fm["description"]) <= 1024)
+        self.assertLessEqual(len(fm["compatibility"]), 500)
+        self.assertEqual(fm["metadata"]["version"], ue.VERSION)
+
+    def test_skill_body_stays_small(self):
+        lines = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8").splitlines()
+        self.assertLess(len(lines), 500)
+
+    def test_plugin_manifests_agree(self):
+        codex = json.loads((REPO / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))
+        claude = json.loads((REPO / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
+        market = json.loads((REPO / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8"))
+        for m in (codex, claude):
+            self.assertEqual(m["name"], "usage-engineer")
+            self.assertEqual(m["version"], ue.VERSION)
+        self.assertEqual(market["plugins"][0]["name"], claude["name"])
+        ui = codex["interface"]
+        self.assertLessEqual(len(ui["displayName"]), 30)
+        self.assertLessEqual(len(ui["shortDescription"]), 30)
+        self.assertLessEqual(len(ui["longDescription"]), 4000)
+        self.assertLessEqual(len(ui["defaultPrompt"]), 3)
+        self.assertTrue(all(len(p) <= 128 for p in ui["defaultPrompt"]))
+        for key in ("logo", "composerIcon"):
+            self.assertTrue((REPO / ui[key]).is_file(), ui[key])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
