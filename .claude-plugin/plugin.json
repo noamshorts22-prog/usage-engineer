@@ -9,6 +9,9 @@
   },
   "homepage": "https://github.com/noamshorts22-prog/usage-engineer",
   "repository": "https://github.com/noamshorts22-prog/usage-engineer",
+  "documentationUrl": "https://github.com/noamshorts22-prog/usage-engineer#readme",
+  "supportUrl": "https://github.com/noamshorts22-prog/usage-engineer/issues",
+  "privacyPolicyUrl": "https://github.com/noamshorts22-prog/usage-engineer/blob/main/PRIVACY.md",
   "license": "MIT",
   "keywords": ["tokens", "usage", "logs", "context", "codex", "opencode", "efficiency"]
 }
