@@ -9,11 +9,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 
 def sha256(path):
-    h = hashlib.sha256()
+    # CRLF and LF checkouts of the same file must hash the same
     with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(65536), b""):
-            h.update(chunk)
-    return h.hexdigest()
+        return hashlib.sha256(f.read().replace(b"\r\n", b"\n")).hexdigest()
 
 
 def run_tests():
