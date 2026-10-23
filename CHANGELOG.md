@@ -4,6 +4,10 @@
 
 - `ue audit --by-day` prints Codex token totals per day (sessions are counted on the day they
   started), so local usage can be lined up against the quota meter.
+- `ue audit` now reads Claude Code transcripts (`~/.claude/projects`, or `$CLAUDE_CONFIG_DIR`):
+  tokens per API response counted once, per-model totals, oversized tool results and repeated
+  identical tool calls, with `--by-day` support. `--claude-projects` overrides the path and
+  `--no-claude` skips it.
 
 ## 0.3.0 - 2026-10-21
 

@@ -5,9 +5,10 @@ no accounts, and no servers. `ue` itself opens no network connections.
 
 ## What it reads
 
-- Codex session logs under `$CODEX_HOME` (default `~/.codex`) and the OpenCode database under
-  `$XDG_DATA_HOME/opencode`, to count token usage. Only metadata such as token counts, timestamps
-  and model names is reported; transcript text is not printed or stored.
+- Codex session logs under `$CODEX_HOME` (default `~/.codex`), Claude Code transcripts under
+  `$CLAUDE_CONFIG_DIR/projects` (default `~/.claude/projects`) and the OpenCode database under
+  `$XDG_DATA_HOME/opencode`, to count token usage. Only metadata such as token counts, timestamps,
+  model names, tool names and output sizes is reported; transcript text is not printed or stored.
 - Files and command output you point it at (for example a log to compact or a project to map).
 - `git` metadata of a project you pass to it.
 

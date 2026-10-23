@@ -19,6 +19,7 @@ from pathlib import Path
 TMP = Path(tempfile.mkdtemp(prefix="ue-selftest-"))
 os.environ["UE_STATE_DIR"] = str(TMP / "state")
 os.environ["CODEX_HOME"] = str(TMP / "codex-home")
+os.environ["CLAUDE_CONFIG_DIR"] = str(TMP / "claude-home")
 
 TOOL_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(TOOL_DIR.parent))
@@ -125,6 +126,87 @@ class TestAudit(TempDirMixin):
         self.assertEqual(rep["parse_errors_total"], 0)  # line not "interesting" => skipped
         rep2 = ue.parse_rollout_usage(d / "rollout-2026-09-19T00-00-00-x.jsonl")
         self.assertEqual(rep2["parse_errors"], 0)
+
+
+def write_transcript(root: Path, name: str, lines: list) -> Path:
+    d = root / "C--proj"
+    d.mkdir(parents=True, exist_ok=True)
+    p = d / f"{name}.jsonl"
+    with open(p, "w", encoding="utf-8") as f:
+        for obj in lines:
+            f.write(json.dumps(obj) + "\n")
+    return p
+
+
+def assistant_line(mid, ts, inp, cache_read, cache_write, out, blocks=None, model="claude-opus-5-5"):
+    return {"type": "assistant", "timestamp": ts, "message": {
+        "id": mid, "model": model, "content": blocks or [{"type": "text", "text": "ok"}],
+        "usage": {"input_tokens": inp, "cache_read_input_tokens": cache_read,
+                  "cache_creation_input_tokens": cache_write, "output_tokens": out}}}
+
+
+def tool_result_line(ts, tool_use_id, content):
+    return {"type": "user", "timestamp": ts, "message": {"role": "user", "content": [
+        {"type": "tool_result", "tool_use_id": tool_use_id, "content": content}]}}
+
+
+class TestClaudeAudit(TempDirMixin):
+    def test_response_split_across_lines_counted_once(self):
+        root = self.work / "projects"
+        ts = "2026-09-19T10:00:00Z"
+        write_transcript(root, "a", [
+            assistant_line("msg_1", ts, 3, 1000, 200, 50, [{"type": "thinking", "thinking": ""}]),
+            assistant_line("msg_1", ts, 3, 1000, 200, 50),
+            assistant_line("msg_2", ts, 2, 1200, 0, 10),
+            assistant_line("synth", ts, 0, 0, 0, 0, model="<synthetic>"),
+        ])
+        rep = ue.audit_claude(root, since=None, max_files=None, max_file_mb=40)
+        self.assertEqual(rep["sessions_with_usage"], 1)
+        self.assertEqual(rep["requests_total"], 2)
+        self.assertEqual(rep["usage_totals"], {"input_tokens": 5, "cache_read_input_tokens": 2200,
+                                               "cache_creation_input_tokens": 200, "output_tokens": 60})
+        self.assertEqual(list(rep["models"]), ["claude-opus-5-5"])
+
+    def test_tool_waste_signals(self):
+        root = self.work / "projects"
+        ts = "2026-09-19T10:00:00Z"
+        call = lambda i: {"type": "tool_use", "id": f"t{i}", "name": "Bash", "input": {"command": "npm test"}}
+        write_transcript(root, "b", [
+            assistant_line("m1", ts, 1, 1, 1, 1, [call(1)]),
+            assistant_line("m1", ts, 1, 1, 1, 1, [call(1)]),  # same block repeated: not a new call
+            tool_result_line(ts, "t1", "x" * 60_000),
+            assistant_line("m2", ts, 1, 1, 1, 1, [call(2)]),
+            tool_result_line(ts, "t2", [{"type": "text", "text": "y" * 10}, {"type": "image"}]),
+        ])
+        rep = ue.audit_claude(root, since=None, max_files=None, max_file_mb=40)
+        self.assertEqual(rep["oversized_buckets"]["48000"], 1)
+        self.assertEqual(rep["largest_output_chars"], 60_000)
+        self.assertEqual(rep["outputs_total_chars"], 60_010)
+        self.assertEqual(list(rep["top_repeated_calls"].values()), [2])
+
+    def test_missing_dir_and_no_usage_are_unknown(self):
+        rep = ue.audit_claude(self.work / "nope", since=None, max_files=None, max_file_mb=40)
+        self.assertFalse(rep["available"])
+        root = self.work / "projects"
+        write_transcript(root, "c", [{"type": "user", "timestamp": "2026-09-19T10:00:00Z",
+                                      "message": {"content": "hi"}}, "{not json"])
+        rep = ue.audit_claude(root, since=None, max_files=None, max_file_mb=40)
+        self.assertEqual(rep["sessions_without_usage"], 1)
+        for k in ue._CLAUDE_TOKEN_KEYS:
+            self.assertIsNone(rep["usage_totals"][k], f"{k} must be UNKNOWN, not 0")
+
+    def test_by_day_and_since(self):
+        root = self.work / "projects"
+        write_transcript(root, "old", [assistant_line("m0", "2026-08-01T10:00:00Z", 9, 9, 9, 9)])
+        write_transcript(root, "d", [assistant_line("m1", "2026-09-19T10:00:00Z", 1, 100, 10, 5)])
+        write_transcript(root, "e", [assistant_line("m2", "2026-09-19T23:00:00Z", 2, 200, 20, 6),
+                                     assistant_line("m3", "2026-09-20T01:00:00Z", 3, 300, 30, 7)])
+        code, out = run_cli(["audit", "--sessions", str(self.work / "sessions"), "--since", "2026-09-01",
+                             "--claude-projects", str(root), "--no-opencode", "--by-day"])
+        self.assertEqual(code, 0)
+        self.assertIn("=== Claude Code audit", out)
+        rows = [l.split() for l in out.splitlines() if l.strip().startswith("2026-")]
+        self.assertEqual(rows, [["2026-09-19", "2", "3", "6", "600", "60", "18", "684"]])
 
 
 class TestSummarizeLog(TempDirMixin):
