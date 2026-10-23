@@ -1,7 +1,7 @@
 {
   "name": "usage-engineer",
   "displayName": "Usage Engineer",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Cut wasted tokens in agent sessions: compact long logs, stop repeated failures, detect stale project maps, and audit local Claude Code, Codex and OpenCode usage. Local only, no network.",
   "author": {
     "name": "noamshorts22-prog",

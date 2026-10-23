@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.1 - 2026-10-23
 
 - `ue audit --by-day` prints Codex token totals per day (sessions are counted on the day they
   started), so local usage can be lined up against the quota meter.
@@ -8,6 +8,8 @@
   tokens per API response counted once, per-model totals, oversized tool results and repeated
   identical tool calls, with `--by-day` support. `--claude-projects` overrides the path and
   `--no-claude` skips it.
+- Fix: bench acceptance scripts hash fixtures with line endings normalized, so they no longer
+  report a checksum mismatch on Windows checkouts that use CRLF.
 
 ## 0.3.0 - 2026-10-21
 
