@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- `ue audit --by-day` prints Codex token totals per day (sessions are counted on the day they
+  started), so local usage can be lined up against the quota meter.
+
 ## 0.3.0 - 2026-10-21
 
 - New: `ue` as an Agent Skill (`skills/usage-engineer/SKILL.md`) with the CLI bundled, so the agent

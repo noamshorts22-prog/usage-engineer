@@ -103,6 +103,18 @@ class TestAudit(TempDirMixin):
         self.assertEqual(rep["oversized_buckets"]["48000"], 1)
         self.assertGreaterEqual(rep["largest_output_chars"], 60_000)
 
+    def test_by_day_table(self):
+        root = self.work / "sessions"
+        write_rollout(root, "2026-09-19", "e", [token_event(100, 40, 10, 5, 110)])
+        write_rollout(root, "2026-09-19", "f", [token_event(200, 50, 20, 5, 220)])
+        write_rollout(root, "2026-09-20", "g", [token_event(300, 60, 30, 5, 330)])
+        code, out = run_cli(["audit", "--sessions", str(root), "--since", "2026-09-01",
+                             "--no-opencode", "--by-day"])
+        self.assertEqual(code, 0)
+        rows = [l.split() for l in out.splitlines() if l.strip().startswith("2026-09-")]
+        self.assertEqual(rows[0], ["2026-09-19", "2", "2", "300", "90", "30", "330"])
+        self.assertEqual(rows[1], ["2026-09-20", "1", "1", "300", "60", "30", "330"])
+
     def test_malformed_lines_counted_not_crash(self):
         root = self.work / "sessions"
         d = root / "2026" / "09" / "19"
