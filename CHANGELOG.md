@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.2 - 2026-10-24
+
+- Published on PyPI: `pipx install usage-engineer`. The package page now links to the repository,
+  issues and changelog, and its description mentions Claude Code.
+
 ## 0.3.1 - 2026-10-23
 
 - `ue audit --by-day` prints Codex token totals per day (sessions are counted on the day they
